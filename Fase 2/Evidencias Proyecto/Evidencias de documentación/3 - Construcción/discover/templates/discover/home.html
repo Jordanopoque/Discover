@@ -1,0 +1,87 @@
+{% extends 'discover/base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/home.css' %}">
+{% endblock %}
+
+{% block content %}
+{% csrf_token %}
+
+
+<div class="welcome-container futuristic">
+    <div class="welcome-message">
+        <h1 class="welcome-title">Bienvenido, 
+        {% if request.session.user_type == 'usuario' and usuario %}
+            {{ usuario.p_nombre }} {{ usuario.p_apellido }}
+        {% elif request.session.user_type == 'empresa' and empresa %}
+            {{ empresa.nombre_empresa }}
+        {% else %}
+            Administrador
+        {% endif %}
+        </h1>
+        <p class="welcome-subtitle">¡Un nuevo descubrimiento está esperando por ti!</p>
+    </div>
+    
+    <div class="category-selector">
+        <div class="custom-select">
+            <select id="category-filter" class="select-input">
+                <option value="" selected disabled hidden>Selecciona una categoría</option>
+                {% for tipo in tipos_recomendacion %}
+                    <option value="{{ tipo.id }}">{{ tipo.nombre }}</option>
+                {% endfor %}
+            </select>
+            <div class="select-arrow">
+                <i class="fas fa-chevron-down"></i>
+            </div>
+        </div>
+    </div>
+    
+    <div class="logo-container">
+
+        <div class="logo-button" id="discover-button">
+            <img src="{% static 'images/Logo estilizado en colores gradientes.png' %}" alt="Discover Logo" class="logo-img">
+            <div class="holographic-effect"></div>
+        </div>
+        
+
+    </div>
+    
+    <p class="discover-text futuristic-text">¡Presiona para empezar a descubrir!</p>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const categoryFilter = document.getElementById('category-filter');
+        const discoverButton = document.getElementById('discover-button');
+        
+        categoryFilter.addEventListener('change', function() {
+            this.dataset.selected = this.value;
+        });
+        
+        discoverButton.addEventListener('click', function() {
+            const selectedCategory = categoryFilter.dataset.selected;
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = "{% url 'principal' %}";
+            
+            const csrfInput = document.createElement('input');
+            csrfInput.type = 'hidden';
+            csrfInput.name = 'csrfmiddlewaretoken';
+            csrfInput.value = '{{ csrf_token }}';
+            form.appendChild(csrfInput);
+            
+            if (selectedCategory) {
+                const categoryInput = document.createElement('input');
+                categoryInput.type = 'hidden';
+                categoryInput.name = 'categoria_filtro';
+                categoryInput.value = selectedCategory;
+                form.appendChild(categoryInput);
+            }
+            
+            document.body.appendChild(form);
+            form.submit();
+        });
+    });
+</script>
+{% endblock %}

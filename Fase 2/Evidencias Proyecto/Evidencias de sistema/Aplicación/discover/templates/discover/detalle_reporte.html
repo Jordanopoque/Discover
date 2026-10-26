@@ -1,0 +1,88 @@
+{% extends 'discover/base.html' %}
+{% load static %}
+
+{% block content %}
+
+{% if messages %}
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags }}">
+        {{ message }}
+    </div>
+    {% endfor %}
+{% endif %}
+
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header">
+            <h3>Detalle del Reporte #{{ reporte.id }}</h3>
+        </div>
+        <div class="card-body">
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <h5>Información del Reporte</h5>
+                    <p><strong>Usuario:</strong> {{ reporte.usuario }}</p>
+                    <p><strong>Recomendación:</strong> 
+                        <a href="{% url 'detalle_recomendacion_admin' reporte.recomendacion.id %}?from=reportes">
+                            {{ reporte.recomendacion.titulo }}
+                        </a>
+                    </p>
+                    <p><strong>Fecha:</strong> {{ reporte.fecha|date:"d/m/Y H:i" }}</p>
+                    <p><strong>Estado actual:</strong> 
+                        <span class="badge 
+                            {% if reporte.estado == 'pendiente' %}bg-warning
+                            {% elif reporte.estado == 'en_revision' %}bg-info
+                            {% elif reporte.estado == 'resuelto' %}bg-success
+                            {% else %}bg-danger{% endif %}">
+                            {{ reporte.get_estado_display }}
+                        </span>
+                    </p>
+                </div>
+                <div class="col-md-6">
+                    <h5>Motivo del Reporte</h5>
+                    <div class="border p-3 bg-light">
+                        {{ reporte.motivo|linebreaks }}
+                    </div>
+                </div>
+            </div>
+            
+            <hr>
+            
+            <h5 class="mb-3">Gestión del Reporte</h5>
+            <form method="post">
+                {% csrf_token %}
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            {{ form.estado.label_tag }}
+                            {{ form.estado }}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        {% if reporte.fecha_resolucion %}
+                        <p><strong>Resuelto el:</strong> {{ reporte.fecha_resolucion|date:"d/m/Y H:i" }}</p>
+                        {% endif %}
+                        {% if reporte.administrador %}
+                        <p><strong>Gestionado por:</strong> {{ reporte.administrador }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    {{ form.comentario_admin.label_tag }}
+                    {{ form.comentario_admin }}
+                    <small class="text-muted">Comentario interno o respuesta al usuario</small>
+                </div>
+                
+                <div class="d-flex justify-content-between">
+                    <a href="{% url 'gestion_reportes' %}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Volver
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Guardar Cambios
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,122 @@
+{% extends 'discover/base.html' %}
+{% load static %}
+
+{% block content %}
+    <div class="card">
+        <h2 class="text-center mb-4">Registro de usuario</h2>
+        
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+        
+        <form method="POST" enctype="multipart/form-data" class="needs-validation" novalidate>
+            {% csrf_token %}
+            
+            {% if form.non_field_errors %}
+                <div class="alert alert-danger">
+                    {% for error in form.non_field_errors %}
+                        {{ error }}
+                    {% endfor %}
+                </div>
+            {% endif %}
+            
+            <div class="mb-3">
+                <label for="{{ form.correo.id_for_label }}" class="form-label">Correo electrónico</label>
+                {{ form.correo }}
+                {% if form.correo.errors %}
+                    <div class="invalid-feedback">
+                        {% for error in form.correo.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+            
+            <div class="mb-3">
+                <label for="{{ form.p_nombre.id_for_label }}" class="form-label">Primer nombre</label>
+                {{ form.p_nombre }}
+                {% if form.p_nombre.errors %}
+                    <div class="invalid-feedback">
+                        {% for error in form.p_nombre.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+            
+            <div class="mb-3">
+                <label for="{{ form.p_apellido.id_for_label }}" class="form-label">Primer apellido</label>
+                {{ form.p_apellido }}
+                {% if form.p_apellido.errors %}
+                    <div class="invalid-feedback">
+                        {% for error in form.p_apellido.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+            
+            <div class="mb-3">
+                <label for="{{ form.contrasena.id_for_label }}" class="form-label">Contraseña</label>
+                {{ form.contrasena }}
+                <small class="form-text text-white">Mínimo 8 caracteres, con al menos una mayúscula y un número</small>
+                {% if form.contrasena.errors %}
+                    <div class="invalid-feedback">
+                        {% for error in form.contrasena.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+            
+            <div class="mb-3">
+                <label for="{{ form.repetir_contrasena.id_for_label }}" class="form-label">Repetir contraseña</label>
+                {{ form.repetir_contrasena }}
+                {% if form.repetir_contrasena.errors %}
+                    <div class="invalid-feedback">
+                        {% for error in form.repetir_contrasena.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+            
+            <div class="mb-3">
+                <label for="{{ form.foto_perfil.id_for_label }}" class="form-label">Foto de perfil</label>
+                {{ form.foto_perfil }}
+                {% if form.foto_perfil.errors %}
+                    <div class="invalid-feedback">
+                        {% for error in form.foto_perfil.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+            
+            <button type="submit" class="btn btn-primary w-100">Registrarse</button>
+        </form>
+    </div>
+
+    <script>
+    // Validación del lado del cliente
+    (function() {
+        'use strict';
+        window.addEventListener('load', function() {
+            var forms = document.getElementsByClassName('needs-validation');
+            var validation = Array.prototype.filter.call(forms, function(form) {
+                form.addEventListener('submit', function(event) {
+                    if (form.checkValidity() === false) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                    }
+                    form.classList.add('was-validated');
+                }, false);
+            });
+        }, false);
+    })();
+    </script>
+{% endblock %}

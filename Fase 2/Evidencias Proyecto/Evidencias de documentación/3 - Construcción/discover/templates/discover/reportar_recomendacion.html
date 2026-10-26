@@ -1,0 +1,55 @@
+{% extends 'discover/base.html' %}
+{% load static %}
+
+{% block content %}
+    <div class="card">
+        <h2 class="text-center mb-4 card-title">Reportar Recomendación</h2>
+        
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+        
+        <p class="mb-3">Estás reportando: <strong>{{ recomendacion.titulo }}</strong></p>
+        <p class="mb-4">Por favor, indica el motivo de tu reporte:</p>
+        
+        <form method="post" class="needs-validation" novalidate>
+            {% csrf_token %}
+            
+            <div class="mb-3">
+                <label for="motivo" class="form-label">Motivo del reporte</label>
+                <textarea class="form-control" id="motivo" name="motivo" rows="5" required></textarea>
+                <div class="invalid-feedback">
+                    Por favor ingresa el motivo del reporte.
+                </div>
+            </div>
+            
+            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                <a href="{% url 'principal' %}" class="btn btn-secondary me-md-2">Cancelar</a>
+                <button type="submit" class="btn btn-danger">Enviar Reporte</button>
+            </div>
+        </form>
+    </div>
+
+    <script>
+    // Validación del lado del cliente
+    (function() {
+        'use strict';
+        window.addEventListener('load', function() {
+            var forms = document.getElementsByClassName('needs-validation');
+            var validation = Array.prototype.filter.call(forms, function(form) {
+                form.addEventListener('submit', function(event) {
+                    if (form.checkValidity() === false) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                    }
+                    form.classList.add('was-validated');
+                }, false);
+            });
+        }, false);
+    })();
+    </script>
+{% endblock %}

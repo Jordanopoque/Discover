@@ -1,0 +1,128 @@
+{% extends 'discover/base.html' %}
+{% load static %}
+
+{% block content %}
+
+{% if messages %}
+    {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    {% endfor %}
+{% endif %}
+
+<!-- SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card mb-4 h-100">
+                <div class="card-body text-center d-flex flex-column">
+                    {% if empresa.logo %}
+                        <img src="{{ empresa.logo.url }}" class="img-fluid rounded-circle mb-3 mx-auto" style="width: 150px; height: 150px; object-fit: cover;">
+                    {% else %}
+                        <img src="{% static 'images/default_profile.png' %}" class="img-fluid rounded mb-3 mx-auto" style="width: 150px; height: 150px; object-fit: cover;">
+                    {% endif %}
+                    <h5 class="card-title">{{ empresa.nombre_empresa }}</h5>
+                    <p class="text-muted mb-1">{{ empresa.correo }}</p>
+                    <p class="text-muted">Registrada desde {{ empresa.fecha_registro|date:"d/m/Y" }}</p>
+                    
+                    <!-- Botón de eliminar cuenta -->
+                    <div class="mt-auto">  <!-- Esto empuja el botón hacia abajo -->
+                        <button class="btn btn-outline-danger w-100" onclick="confirmarEliminacionCuenta('empresa')">
+                            <i class="fas fa-trash-alt"></i> Eliminar cuenta
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-8">
+            <div class="card mb-4 h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Editar perfil</h5>
+                    <form method="POST" enctype="multipart/form-data" id="profileForm">
+                        {% csrf_token %}
+                        {{ form.as_p }}
+                        <button type="submit" class="btn btn-primary">Guardar cambios</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// El mismo script que en perfil_usuario.html
+function confirmarEliminacionCuenta(tipo) {
+    Swal.fire({
+        title: '¿Eliminar cuenta permanentemente?',
+        html: `<p class="text-danger">Esta acción no se puede deshacer y se perderán todos los datos de la empresa.</p>
+              <p>Todas las recomendaciones asociadas también serán afectadas.</p>
+              <p>¿Estás completamente seguro?</p>`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Sí, eliminar',
+        cancelButtonText: 'Cancelar',
+        focusCancel: true,
+        backdrop: `
+            rgba(200, 50, 50, 0.4)
+            url("/static/images/alert-danger.gif")
+            center top
+            no-repeat
+        `
+    }).then((result) => {
+        if (result.isConfirmed) {
+            eliminarCuenta(tipo);
+        }
+    });
+}
+
+function eliminarCuenta(tipo) {
+    fetch(`/eliminar-cuenta/${tipo}/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': '{{ csrf_token }}',
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            // Si la respuesta no es 2xx, lanzar error
+            throw new Error('Error en la respuesta del servidor');
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.status === 'success') {
+            Swal.fire({
+                title: 'Cuenta eliminada',
+                text: data.message,
+                icon: 'success'
+            }).then(() => {
+                window.location.href = "{% url 'inicio' %}";
+            });
+        } else {
+            // Manejar casos donde status no es success pero la respuesta fue OK
+            Swal.fire('Proceso completado', 'La cuenta fue eliminada, pero hubo un mensaje adicional: ' + data.message, 'info');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        // Mostrar mensaje genérico si la cuenta se eliminó pero hubo error en la respuesta
+        Swal.fire({
+            title: 'Proceso completado',
+            text: 'La cuenta fue eliminada, pero hubo un problema con la respuesta del servidor. Serás redirigido.',
+            icon: 'info'
+        }).then(() => {
+            window.location.href = "{% url 'inicio' %}";
+        });
+    });
+}   
+</script>
+{% endblock %}

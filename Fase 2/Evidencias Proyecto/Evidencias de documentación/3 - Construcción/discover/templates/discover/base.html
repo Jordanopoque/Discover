@@ -1,0 +1,171 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang = "es">
+    <head>
+        <meta charset = "UTF-8">
+        <meta name = "viewport" content = "width=device-width, initial-scale=1.0">
+        <title>Base</title>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-SgOJa3DmI69IUzQ2PVdRZhwQ+dy64/BUtbMJw1MZ8t5HZApcHrRKUc4W0kG879m7" crossorigin="anonymous">
+        <!-- Font Awesome para íconos -->
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+        <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+        <!-- SweetAlert2 para diálogos bonitos -->
+        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+        {% block extra_css %}{% endblock %}
+    </head>
+    <body>
+        {% block header %}
+        <nav class="navbar barra_nav fixed-top">
+            <div class="container-fluid barra_nav">
+                <!-- Botón del toggler (manteniendo el original) -->
+                <button class="navbar-toggler custom-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar">
+                    <span class="fas fa-align-center"></span>
+                </button>
+                
+                <!-- Texto "Discover" con ícono -->
+                <a class="navbar-brand me-auto" href="{% url 'home' %}">
+                    <i class="fas fa-compass me-2"></i>Discover
+                </a>
+                
+                <!-- Información del usuario en la esquina superior derecha -->
+                {% if request.session.user_id %}
+                <div class="d-flex align-items-center ms-auto">
+                    <div class="text-end text-white me-3">
+                        <div class="fw-bold"></div>
+                        <div class="small">
+                            {% if request.session.user_type == 'usuario' %}
+                                <i class="fas fa-user me-1"></i> <a class="user-link" href="{% url 'perfil' %}"> {{ usuario.p_nombre }} {{ usuario.p_apellido }}</a>
+                            {% elif request.session.user_type == 'empresa' %}
+                                <i class="fas fa-building me-1"></i><a class="user-link" href="{% url 'perfil' %}"> {{ empresa.nombre_empresa }}</a>
+                            {% elif request.session.user_type == 'administrador' %}
+                                <i class="fas fa-shield-alt me-1"></i> {{ administrador.p_nombre }}
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- Menú offcanvas (manteniendo estructura original) -->
+                <div class="offcanvas offcanvas-start" tabindex="-1" id="offcanvasNavbar">
+                    <div class="offcanvas-header barra_nav">
+                        <h5 class="offcanvas-title">
+                            <i class="fas fa-compass me-2"></i>Discover
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button>
+                    </div>
+                    <div class="offcanvas-body barra_nav">
+                        <ul class="navbar-nav">
+                            {% if request.session.user_id %}
+                                <!-- Opciones cuando el usuario está logueado (con íconos) -->
+                                <li class="nav-item">
+                                    <a class="nav-link active d-flex align-items-center" href="{% url 'home' %}">
+                                        <i class="fas fa-home me-3"></i>Inicio
+                                    </a>
+                                </li>
+                                {% if request.session.user_type == 'usuario' %}
+                                <li class="nav-item">
+                                    <a class="nav-link active d-flex align-items-center" href="{% url 'crear_recomendacion' %}">
+                                        <i class="fas fa-plus-circle me-3"></i>Subir Recomendación
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link active d-flex align-items-center" href="{% url 'recomendaciones_subidas_usuario' %}">
+                                        <i class="fas fa-list-ul me-3"></i>Mis Recomendaciones
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link active d-flex align-items-center" href="{% url 'perfil' %}">
+                                        <i class="fas fa-user me-3"></i>Mi Perfil
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link active d-flex align-items-center" href="{% url 'coleccion' %}">
+                                        <i class="fas fa-bookmark me-3"></i>Colección
+                                    </a>
+                                </li>
+                                {% elif request.session.user_type == 'empresa' %}
+                                <li class="nav-item">
+                                    <a class="nav-link active d-flex align-items-center" href="{% url 'crear_recomendacion' %}">
+                                        <i class="fas fa-plus-circle me-3"></i>Subir Recomendación
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link active d-flex align-items-center" href="{% url 'perfil' %}">
+                                        <i class="fas fa-building me-3"></i>Perfil Empresa
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link active d-flex align-items-center" href="{% url 'recomendaciones_subidas_empresa' %}">
+                                        <i class="fas fa-list-ul me-3"></i>Nuestras Recomendaciones
+                                    </a>
+                                </li>
+                                {% elif request.session.user_type == 'administrador' %}
+                                <li class="nav-item">
+                                    <a class="nav-link active d-flex align-items-center" href="{% url 'panel_administrador' %}">
+                                        <i class="fas fa-chart-line me-3"></i>Centro de Analítica
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link active d-flex align-items-center" href="{% url 'panel_administrativo' %}">
+                                        <i class="fas fa-list-ul me-3"></i>Panel Administrativo
+                                    </a>
+                                </li>
+                                {% endif %}
+                                <li class="nav-item">
+                                    <form method="post" action="{% url 'logout' %}">
+                                        {% csrf_token %}
+                                        <button class="nav-link active d-flex align-items-center border-0 bg-transparent" type="submit">
+                                        <i class="fas fa-sign-out-alt me-3"></i>Cerrar sesión
+                                        </button>
+                                    </form>
+                                </li>
+                            {% else %}
+                                <!-- Opciones cuando no hay usuario logueado -->
+                                <li class="nav-item">
+                                    <a class="nav-link active d-flex align-items-center" href="{% url 'login' %}">
+                                        <i class="fas fa-sign-in-alt me-3"></i>Login
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link active d-flex align-items-center" href="{% url 'registro' %}">
+                                        <i class="fas fa-user-plus me-3"></i>Registro
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link active d-flex align-items-center" href="{% url 'registro_empresa' %}">
+                                        <i class="fas fa-building me-3"></i>Registro Empresas
+                                    </a>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </nav>
+          
+        
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/js/bootstrap.bundle.min.js" integrity="sha384-k6d4wzSIapyDyv1kpU366/PK5hCdSbCRGRCMv+eplOQJWyd1fbcAu9OCUj5zNLiq" crossorigin="anonymous"></script>
+        {% endblock %}
+        
+        <main class="container mt-4 flex-grow-1">
+            {% block content %}
+            {% endblock %}
+        </main>
+
+        <footer class="footer w-100" style="background: linear-gradient(135deg,rgba(79, 102, 178, 0)); color: white;">
+            <div class="container py-3">
+                <div class="row">
+                    <div class="col-md-6 text-center text-md-start">
+                        <p class="small mb-0">&copy; {% now "Y" %} Discover. Todos los derechos reservados.</p>
+                    </div>
+                    <div class="col-md-6 text-center text-md-end">
+                        <a href="#" class="text-white me-3 small">Términos</a>
+                        <a href="#" class="text-white me-3 small">Privacidad</a>
+                        <a href="#" class="text-white small">Contacto</a>
+                    </div>
+                </div>
+            </div>
+        </footer>
+    </body>
+</html>

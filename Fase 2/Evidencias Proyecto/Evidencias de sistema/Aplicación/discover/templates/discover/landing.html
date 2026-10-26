@@ -1,0 +1,267 @@
+{% extends 'discover/base.html' %}
+{% load static %}
+
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'css/landing.css' %}">
+    <!-- Mantén tus estilos personalizados aquí -->
+    <style>
+
+    </style>
+{% endblock %}
+
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6 hero-content">
+                <h1 class="hero-title" style="
+                text-align: center;
+                display: flex;
+                justify-content: center;
+                margin-left: auto;
+                margin-right: auto;
+                max-width: 80%; /* Ajusta este valor según necesites */
+            ">Descubre sin prejuicios</h1>
+                <p class="hero-subtitle justify-content-center" style="
+                text-align: center;
+                display: flex;
+                justify-content: center;
+                margin-left: auto;
+                margin-right: auto;
+                max-width: 80%; /* Ajusta este valor según necesites */
+            ">Explora recomendaciones aleatorias de películas, libros, música y más en un formato divertido e interactivo.</p>
+                <div class="hero-buttons">
+                    <a href="{% url 'registro' %}" class="btn btn-primary-hero btn-hero">Regístrate gratis</a>
+                    <a href="{% url 'login' %}" class="btn btn-outline-hero btn-hero">Iniciar sesión</a>
+                </div>
+            </div>
+            <div class="col-lg-6 d-none d-lg-block">
+                <!-- Aquí puedes colocar una imagen representativa o un mockup -->
+                <div class="image-placeholder floating" style="height: 400px; width: 90%;">
+                    <img src="{% static 'images/home3.png' %}" alt="Discover Logo" class="logo-img" style="width: 100%; 
+                    height: 100%; 
+                    object-fit: cover;
+                    object-position: center;">
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section class="features-section">
+    <div class="container">
+        <h2 class="section-title-features">¿Qué ofrece Discover?</h2>
+        <div class="row">
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-random"></i>
+                    </div>
+                    <h3 class="feature-title">Descubrimiento aleatorio</h3>
+                    <p>Recibe recomendaciones al azar sin algoritmos que limiten tu experiencia. Descubre contenido que de otra forma nunca hubieras encontrado.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-bookmark"></i>
+                    </div>
+                    <h3 class="feature-title">Guarda tus favoritos</h3>
+                    <p>¿Encontraste algo que te gustó? Guárdalo en tu colección personal para acceder fácilmente más tarde.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-share-alt"></i>
+                    </div>
+                    <h3 class="feature-title">Comparte tus descubrimientos</h3>
+                    <p>Sube tus propias recomendaciones y compártelas con la comunidad para que otros puedan disfrutarlas.</p>
+                </div>
+            </div>
+        </div>
+        <div class="row mt-4">
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-building"></i>
+                    </div>
+                    <h3 class="feature-title">Para empresas</h3>
+                    <p>Las empresas pueden promocionar sus productos de manera orgánica, destacándose como recomendaciones promocionales.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <h3 class="feature-title">Estadísticas</h3>
+                    <p>Accede a datos sobre cómo tus recomendaciones están siendo recibidas por la comunidad.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-mobile-alt"></i>
+                    </div>
+                    <h3 class="feature-title">Experiencia interactiva</h3>
+                    <p>Disfruta de un formato de carta que gira con animaciones fluidas para una experiencia de usuario única.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Demo Section -->
+<section class="demo-section">
+    <div class="container">
+        <h2 class="section-title">Así funciona Discover</h2>
+        <p class="text-center mb-5 section-subtitle">Interactúa con las recomendaciones que aparecen al azar en formato de carta giratoria</p>
+        
+        <div class="gif-container" style="
+        height: 500px;
+        width: 350px;
+        max-width: 100%;
+        margin: 0 auto;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    ">
+        <img src="{% static 'images/carta.gif' %}" 
+             alt="Demo interactiva de Discover"
+             style="
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+                object-position: center;
+             ">
+    </div>
+        </div>
+        
+        <div class="row mt-5">
+            <div class="col-md-6">
+                <div class="feature-card">
+                    <h3 class="feature-title"><i class="fas fa-user me-2 feature-icon"></i> Para usuarios</h3>
+                    <ul class="mt-3">
+                        <li class="mb-2">Descubre contenido nuevo sin sesgos</li>
+                        <li class="mb-2">Guarda tus recomendaciones favoritas</li>
+                        <li class="mb-2">Crea y comparte tus propias recomendaciones</li>
+                        <li class="mb-2">Explora diferentes categorías y géneros</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="feature-card">
+                    <h3  class="feature-title"><i class="fas fa-building me-2 feature-icon"></i> Para empresas</h3>
+                    <ul class="mt-3">
+                        <li class="mb-2">Promociona tus productos de forma orgánica</li>
+                        <li class="mb-2">Llega a una audiencia interesada en descubrir</li>
+                        <li class="mb-2">Accede a estadísticas de engagement</li>
+                        <li class="mb-2">Gestiona múltiples recomendaciones</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Testimonials Section -->
+<section class="testimonial-section">
+    <div class="container">
+        <h2 class="section-title-features">Lo que dicen nuestros usuarios</h2>
+        <div class="row">
+            <div class="col-md-4">
+                <div class="testimonial-card">
+                    <p class="testimonial-text">Discover me ha ayudado a encontrar libros que nunca hubiera elegido por mí mismo. ¡Ahora son mis favoritos!</p>
+                    <div class="testimonial-author">
+                        <!-- Aquí puedes colocar una imagen real -->
+                        <div class="image-placeholder" style="width: 50px; height: 50px; border-radius: 50%;">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div class="author-info">
+                            <h5>Carlos M.</h5>
+                            <p>Usuario desde 2023</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="testimonial-card">
+                    <p class="testimonial-text">Como pequeña editorial, Discover nos ha dado visibilidad que no conseguíamos en otras plataformas.</p>
+                    <div class="testimonial-author">
+                        <div class="image-placeholder" style="width: 50px; height: 50px; border-radius: 50%;">
+                            <i class="fas fa-user-tie"></i>
+                        </div>
+                        <div class="author-info">
+                            <h5>Editorial Luna</h5>
+                            <p>Empresa asociada</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="testimonial-card">
+                    <p class="testimonial-text">La interfaz es tan divertida que a mis hijos les encanta girar las cartas para descubrir nuevas películas familiares.</p>
+                    <div class="testimonial-author">
+                        <div class="image-placeholder" style="width: 50px; height: 50px; border-radius: 50%;">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div class="author-info">
+                            <h5>María G.</h5>
+                            <p>Madre de familia</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA Section -->
+<section class="cta-section">
+    <div class="container">
+        <h2 class="cta-title">¿Listo para empezar a descubrir?</h2>
+        <p class="cta-subtitle">Únete a nuestra comunidad de exploradores de contenido hoy mismo.</p>
+        <div class="d-flex justify-content-center gap-3">
+            <a href="{% url 'registro' %}" class="btn btn-light btn-hero">Regístrate gratis</a>
+            <a href="{% url 'registro_empresa' %}" class="btn btn-outline-light btn-hero">Registro para empresas</a>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Animaciones al hacer scroll
+    document.addEventListener('DOMContentLoaded', function() {
+        const animateOnScroll = function() {
+            const elements = document.querySelectorAll('.feature-card, .testimonial-card');
+            
+            elements.forEach(element => {
+                const elementPosition = element.getBoundingClientRect().top;
+                const screenPosition = window.innerHeight / 1.3;
+                
+                if (elementPosition < screenPosition) {
+                    element.style.opacity = '1';
+                    element.style.transform = 'translateY(0)';
+                }
+            });
+        };
+        
+        // Inicializar elementos con opacidad 0 para la animación
+        const cards = document.querySelectorAll('.feature-card, .testimonial-card');
+        cards.forEach(card => {
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(20px)';
+            card.style.transition = 'all 0.6s ease';
+        });
+        
+        window.addEventListener('scroll', animateOnScroll);
+        animateOnScroll(); // Ejecutar una vez al cargar
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,91 @@
+{% extends 'discover/base.html' %}
+{% load static %}
+
+{% block content %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/login.css' %}">
+
+{% endblock %}
+
+<div class="login-container">
+    <div class="login-card">
+        <div class="login-header">
+            <h2>Iniciar Sesión</h2>
+            <div class="header-decoration"></div>
+        </div>
+        <div class="login-body">
+            {% if messages %}
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}">
+                    {{ message }}
+                </div>
+                {% endfor %}
+            {% endif %}
+            
+            <form method="POST" novalidate class="needs-validation">
+                {% csrf_token %}
+                
+                <div class="form-group">
+                    <label for="{{ form.correo.id_for_label }}">Correo electrónico</label>
+                    <input type="email" name="{{ form.correo.name }}" id="{{ form.correo.id_for_label }}" 
+                        class="form-control" value="{{ form.correo.value|default_if_none:'' }}" required>
+                    <div class="invalid-feedback">
+                        Por favor ingresa tu correo electrónico.
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="{{ form.contrasena.id_for_label }}">Contraseña</label>
+                    <input type="password" name="{{ form.contrasena.name }}" id="{{ form.contrasena.id_for_label }}" 
+                        class="form-control" required>
+                    <div class="invalid-feedback">
+                        Por favor ingresa tu contraseña.
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="id_tipo_usuario">Tipo de cuenta</label>
+                    <select name="tipo_usuario" id="id_tipo_usuario" class="form-control" required>
+                        <option value="">Seleccione un tipo de cuenta...</option>
+                        <option value="usuario">Usuario</option>
+                        <option value="empresa">Empresa</option>
+                        <option value="administrador">Administrador</option>
+                    </select>
+                    <div class="invalid-feedback">
+                        Por favor selecciona un tipo de cuenta.
+                    </div>
+                </div>
+                
+                <button type="submit" class="submit-btn">Ingresar</button>
+            </form>
+            
+            <div class="login-links">
+                <a href="{% url 'registro' %}" class="login-link">¿No tienes cuenta? Regístrate como usuario</a>
+                <a href="{% url 'registro_empresa' %}" class="login-link">Registrar empresa</a>
+                <a href="{% url 'password_reset' %}" class="login-link">¿Olvidaste tu contraseña?</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script>
+// Validación del lado del cliente
+(function() {
+    'use strict';
+    window.addEventListener('load', function() {
+        var form = document.querySelector('.needs-validation');
+        
+        form.addEventListener('submit', function(event) {
+            if (form.checkValidity() === false) {
+                event.preventDefault();
+                event.stopPropagation();
+
+            }
+            form.classList.add('was-validated');
+        }, false);
+    }, false);
+})();
+</script>
+{% endblock %}

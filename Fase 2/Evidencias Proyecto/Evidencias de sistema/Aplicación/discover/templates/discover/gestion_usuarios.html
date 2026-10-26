@@ -1,0 +1,157 @@
+{% extends 'discover/base.html' %}
+{% load static %}
+
+{% block content %}
+
+{% if messages %}
+    {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    {% endfor %}
+{% endif %}
+
+<div class="container mt-4">
+    <h2 class="mb-4">Gestión de Usuarios</h2>
+    
+    <div class="mb-3">
+        <div class="btn-group" role="group">
+            <span class="badge bg-success me-2">Activos: {{ usuarios_activos }}</span>
+            <span class="badge bg-danger me-2">Bloqueados: {{ usuarios_bloqueados }}</span>
+            <span class="badge bg-secondary me-2">Inactivos: {{ usuarios_inactivos }}</span>
+            <div>
+                <a href="{% url 'panel_administrativo' %}" class="btn btn-primary ">Volver</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="card-table">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Nombre</th>
+                            <th>Correo</th>
+                            <th>Fecha Registro</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for usuario in usuarios %}
+                        <tr>
+                            <td>{{ usuario.p_nombre }} {{ usuario.p_apellido }}</td>
+                            <td>{{ usuario.correo }}</td>
+                            <td>{{ usuario.fecha_registro|date:"d/m/Y" }}</td>
+                            <td>
+                                {% if usuario.is_blocked %}
+                                    <span class="badge bg-danger">Bloqueado</span>
+                                {% elif not usuario.is_active %}
+                                    <span class="badge bg-secondary">Inactivo</span>
+                                {% else %}
+                                    <span class="badge bg-success">Activo</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    {% if usuario.is_blocked %}
+                                        <form method="post" action="{% url 'desbloquear_usuario' usuario.id %}" class="me-1">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-sm btn-success">
+                                                <i class="fas fa-unlock"></i> Desbloquear
+                                            </button>
+                                        </form>
+                                    {% else %}
+                                        <button class="btn btn-sm btn-warning me-1" data-bs-toggle="modal" 
+                                                data-bs-target="#bloquearModal{{ usuario.id }}">
+                                            <i class="fas fa-lock"></i> Bloquear
+                                        </button>
+                                    {% endif %}
+                                    
+                                    {% if usuario.is_active %}
+                                        <form method="post" action="{% url 'desactivar_usuario' usuario.id %}" class="me-1">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-sm btn-secondary">
+                                                <i class="fas fa-eye-slash"></i> Desactivar
+                                            </button>
+                                        </form>
+                                    {% else %}
+                                        <form method="post" action="{% url 'reactivar_usuario' usuario.id %}" class="me-1">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-sm btn-info">
+                                                <i class="fas fa-eye"></i> Reactivar
+                                            </button>
+                                        </form>
+                                    {% endif %}
+                                    
+                                    <button class="btn btn-sm btn-danger" data-bs-toggle="modal" 
+                                            data-bs-target="#eliminarModal{{ usuario.id }}">
+                                        <i class="fas fa-trash"></i> Eliminar
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        
+                        <!-- Modal para bloquear usuario -->
+                        <div class="modal fade" id="bloquearModal{{ usuario.id }}" tabindex="-1" aria-hidden="true">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <form method="post" action="{% url 'bloquear_usuario' usuario.id %}">
+                                        {% csrf_token %}
+                                        <div class="modal-header">
+                                            <h5 class="modal-title">Bloquear Usuario</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <p>¿Estás seguro de bloquear a "{{ usuario.p_nombre }} {{ usuario.p_apellido }}"?</p>
+                                            <div class="mb-3">
+                                                <label for="motivo{{ usuario.id }}" class="form-label">Motivo del bloqueo:</label>
+                                                <textarea class="form-control" id="motivo{{ usuario.id }}" 
+                                                          name="motivo" rows="3" required></textarea>
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                            <button type="submit" class="btn btn-warning">Confirmar Bloqueo</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Modal para eliminar usuario -->
+                        <div class="modal fade" id="eliminarModal{{ usuario.id }}" tabindex="-1" aria-hidden="true">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <form method="post" action="{% url 'eliminar_usuario' usuario.id %}">
+                                        {% csrf_token %}
+                                        <div class="modal-header">
+                                            <h5 class="modal-title">Eliminar Usuario</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <p>¿Estás seguro de eliminar a "{{ usuario.p_nombre }} {{ usuario.p_apellido }}"?</p>
+                                            <p class="text-danger">Esta acción no se puede deshacer.</p>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                            <button type="submit" class="btn btn-danger">Confirmar Eliminación</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center">No hay usuarios registrados</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

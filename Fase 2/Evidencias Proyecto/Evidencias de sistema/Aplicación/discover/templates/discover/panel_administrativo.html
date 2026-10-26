@@ -1,0 +1,62 @@
+{% extends 'discover/base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">Panel Administrativo</h2>
+
+    <div class="row">
+        <!-- Tarjeta de Recomendaciones Pendientes -->
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Recomendaciones Pendientes</h5>
+                    <h1 class="display-4">{{ pendientes }}</h1>
+                    <a href="{% url 'gestion_recomendaciones' %}" class="btn btn-primary">Gestionar</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tarjeta de Usuarios -->
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Usuarios Registrados</h5>
+                    <h1 class="display-4">{{ usuarios }}</h1>
+                    <a href="{% url 'gestion_usuarios' %}" class="btn btn-primary">Gestionar</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tarjeta de Empresas -->
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Empresas Registradas</h5>
+                    <h1 class="display-4">{{ empresas }}</h1>
+                    <a href="{% url 'gestion_empresas' %}" class="btn btn-primary">Gestionar</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mt-4">
+        <div class="card-header">
+            <h4>Acciones Rápidas</h4>
+        </div>
+        <div class="card-body d-flex flex-wrap gap-2">
+            <a href="{% url 'crear_recomendacion' %}?from=admin-panel" class="btn btn-success">
+                <i class="fas fa-plus"></i> Crear Recomendación
+            </a>
+            <a href="{% url 'gestion_categorias' %}" class="btn btn-primary">
+                <i class="fas fa-tags"></i> Gestionar Categorías
+            </a>
+            <a href="{% url 'gestion_reportes' %}" class="btn btn-warning">
+                <i class="fas fa-flag"></i> Gestionar Reportes
+                {% if reportes_pendientes %}
+                    <span class="badge bg-danger">{{ reportes_pendientes }}</span>
+                {% endif %}
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,247 @@
+{% extends 'discover/base.html' %}
+{% load static %}
+
+{% block content %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/crear_recomendacion.css' %}">
+{% endblock %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    {% if request.session.user_type == 'usuario' or request.session.user_type == 'empresa'  %}
+        <a href="{% url 'home' %}" class="btn btn-secondary">
+    {% else %}
+        <a href="{% url 'panel_administrativo' %}" class="btn btn-secondary">
+    {% endif %}
+        <i class="fas fa-arrow-left"></i> Volver
+    </a>
+</div>
+
+<div class="wide-form-container">
+    <div class="wide-form-card">
+        <div class="wide-form-header">
+            <h3>Crear Nueva Recomendación</h3>
+            <div class="header-decoration"></div>
+        </div>
+        <div class="wide-form-body">
+            {% if messages %}
+            <div class="wide-form-alerts">
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}">
+                    {{ message }}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <form method="post" enctype="multipart/form-data" novalidate>
+                {% csrf_token %}
+                
+                {% if form.errors %}
+                <div class="wide-form-errors">
+                    <strong>Errores:</strong>
+                    <ul>
+                    {% for field, errors in form.errors.items %}
+                        {% for error in errors %}
+                        <li>{{ error }}</li>
+                        {% endfor %}
+                    {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+
+                <div class="wide-form-fields">
+                    {% for field in form %}
+                    <div class="wide-form-field">
+                        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                        {{ field }}
+                        {% if field.name == 'titulo' %}
+                        <button type="button" id="generar-con-gemini" class="btn btn-outline-primary mt-2" hidden>
+                            Generar resumen, trivia y frase destacada con IA
+                        </button>
+                        <div id="gemini-progress" class="gemini-progress" role="progressbar"
+                             aria-label="Generando contenido con Gemini" aria-valuetext="En progreso" hidden>
+                            <div class="gemini-progress-bar"></div>
+                        </div>
+                        <small id="gemini-status" class="field-help-text" role="status" aria-live="polite"></small>
+                        {% endif %}
+                        {% if field.help_text %}
+                        <small class="field-help-text">{{ field.help_text }}</small>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <div class="wide-form-actions">
+                    <a href="{% url 'inicio' %}" class="cancel-btn">Cancelar</a>
+                    <button type="submit" class="submit-btn">Enviar Recomendación</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function initializeRecommendationForm() {
+    const titleField = document.getElementById('id_titulo');
+    const generateButton = document.getElementById('generar-con-gemini');
+    const summaryField = document.getElementById('id_resumen');
+    const triviaField = document.getElementById('id_trivia');
+    const featuredPhraseField = document.getElementById('id_frase_destacada');
+    const progressBar = document.getElementById('gemini-progress');
+    const geminiStatus = document.getElementById('gemini-status');
+    const generateButtonLabel = generateButton?.textContent.trim() || '';
+
+    function playFingerSnap(audioContext) {
+        const duration = 0.12;
+        const sampleRate = audioContext.sampleRate;
+        const buffer = audioContext.createBuffer(1, Math.floor(sampleRate * duration), sampleRate);
+        const samples = buffer.getChannelData(0);
+
+        for (let i = 0; i < samples.length; i++) {
+            const decay = Math.exp(-i / (sampleRate * 0.018));
+            samples[i] = (Math.random() * 2 - 1) * decay;
+        }
+
+        const source = audioContext.createBufferSource();
+        const filter = audioContext.createBiquadFilter();
+        const gain = audioContext.createGain();
+        source.buffer = buffer;
+        filter.type = 'bandpass';
+        filter.frequency.value = 1800;
+        filter.Q.value = 0.8;
+        gain.gain.setValueAtTime(0.65, audioContext.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + duration);
+        source.connect(filter);
+        filter.connect(gain);
+        gain.connect(audioContext.destination);
+        source.start();
+    }
+
+    if (titleField && generateButton && summaryField && triviaField && featuredPhraseField && progressBar && geminiStatus) {
+        generateButton.hidden = !titleField.value.trim();
+        titleField.addEventListener('input', function() {
+            generateButton.hidden = !titleField.value.trim();
+        });
+
+        generateButton.addEventListener('click', async function() {
+            const titulo = titleField.value.trim();
+            if (!titulo) return;
+            generateButton.disabled = true;
+            generateButton.textContent = 'Generando contenido...';
+            progressBar.hidden = false;
+            progressBar.style.display = 'block';
+            progressBar.setAttribute('aria-busy', 'true');
+            geminiStatus.textContent = 'Generando resumen, trivia y frase destacada con Gemini...';
+            let audioContext;
+            try {
+                await new Promise(function(resolve) {
+                    window.requestAnimationFrame(function() {
+                        window.requestAnimationFrame(resolve);
+                    });
+                });
+
+                const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+                if (AudioContextClass) {
+                    try {
+                        audioContext = new AudioContextClass();
+                        audioContext.resume().catch(function(error) {
+                            console.warn('No se pudo activar el audio del chasquido.', error);
+                        });
+                    } catch (error) {
+                        console.warn('El navegador no pudo iniciar el audio del chasquido.', error);
+                    }
+                }
+
+                const response = await fetch('{% url "generar_recomendacion_ia" %}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                    },
+                    body: JSON.stringify({ titulo: titulo })
+                });
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.error || 'No se pudo generar el contenido.');
+
+                summaryField.value = data.resumen;
+                triviaField.value = data.trivia;
+                featuredPhraseField.value = data.frase_destacada;
+                geminiStatus.textContent = 'Los tres textos fueron generados. Puedes editarlos antes de enviar.';
+                if (audioContext && audioContext.state === 'running') {
+                    try {
+                        playFingerSnap(audioContext);
+                    } catch (error) {
+                        console.warn('No se pudo reproducir el chasquido.', error);
+                    }
+                }
+            } catch (error) {
+                geminiStatus.textContent = error.message || 'No se pudo generar el contenido.';
+            } finally {
+                progressBar.hidden = true;
+                progressBar.style.display = 'none';
+                progressBar.removeAttribute('aria-busy');
+                generateButton.disabled = false;
+                generateButton.textContent = generateButtonLabel;
+                if (audioContext) {
+                    window.setTimeout(function() {
+                        audioContext.close().catch(function(error) {
+                            console.warn('No se pudo cerrar el contexto de audio.', error);
+                        });
+                    }, 200);
+                }
+            }
+        });
+    }
+
+    function cargarGeneros() {
+        const tipoSelect = document.getElementById('id_tipo');
+        const generoSelect = document.getElementById('id_genero');
+        const tipoId = tipoSelect?.value;
+        if (!generoSelect) return;
+
+        generoSelect.replaceChildren(new Option('---------', ''));
+        
+        if (tipoId) {
+            const params = new URLSearchParams({ tipo_id: tipoId });
+            fetch(`{% url "obtener_generos_por_tipo" %}?${params}`)
+                .then(function(response) {
+                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                    return response.json();
+                })
+                .then(function(data) {
+                    if (Array.isArray(data)) {
+                        data.forEach(function(genero) {
+                            generoSelect.add(new Option(String(genero.nombre), genero.id));
+                        });
+                    }
+                })
+                .catch(function(error) {
+                    console.error('Error al cargar los géneros:', error);
+                });
+        }
+    }
+
+    document.getElementById('id_tipo')?.addEventListener('change', cargarGeneros);
+    if (document.getElementById('id_tipo')?.value) cargarGeneros();
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeRecommendationForm);
+} else {
+    initializeRecommendationForm();
+}
+</script>
+
+<style>
+    .card {
+        border-radius: 10px;
+    }
+    textarea {
+        min-height: 100px;
+    }
+    .alert-dismissible {
+        margin-bottom: 20px;
+    }
+</style>
+{% endblock %}

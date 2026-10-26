@@ -1,0 +1,64 @@
+{% extends 'discover/base.html' %}
+{% load static %}
+
+{% block content %}
+
+{% block extra_css %}
+<style>
+    .fixed-image {
+        width: 100%;       /* Ocupa todo el ancho del contenedor padre */
+        height: 300px;     /* Altura fija */
+        object-fit: cover; /* Esto hace que la imagen cubra el espacio manteniendo su relación de aspecto */
+    }
+</style>
+{% endblock %}
+
+<div class="container mt-4">
+    <h3 class="card-title"><i class="fas fa-file-arrow-up"></i> Mis Recomendaciones</h2>
+    <p class="text-muted">Tus recomendaciones subidas</p>
+    {% if recomendaciones %}
+        <div class="row">
+            {% for recomendacion in recomendaciones %}
+                <div class="col-md-4 mb-4 sb-2">
+                    <div class="card h-100">
+                        {% if recomendacion.portada %}
+                            <img src="{{ recomendacion.portada.url }}" class="card-img-top fixed-image" alt="{{ recomendacion.titulo }}">
+                        {% else %}
+                            <img src="{% static 'images/default_portada.jpg' %}" class="card-img-top fixed-image" alt="Portada predeterminada">
+                        {% endif %}
+                        <div class="card-body">
+                            <h5 class="card-title">{{ recomendacion.titulo }}</h5>
+                            <p class="card-text">
+                                <strong>Estado:</strong> 
+                                <span class="badge 
+                                    {% if recomendacion.estado_aprobacion.nombre == 'aprobado' %}bg-success
+                                    {% elif recomendacion.estado_aprobacion.nombre == 'pendiente' %}bg-warning text-dark
+                                    {% else %}bg-danger{% endif %}">
+                                    {{ recomendacion.estado_aprobacion.nombre|capfirst }}
+                                </span>
+                            </p>
+                            <div class="card-footer bg-white">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <small class="text-muted">
+                                        {{ recomendacion.fecha_creacion|date:"d/m/Y" }}
+                                    </small>
+                                    <span class="badge bg-light text-dark">
+                                        <i class="fas fa-heart text-danger"></i> 
+                                        {{ recomendacion.num_likes|default:"0" }}
+                                    </span>
+                                </div>
+                            </div>
+                            <a href="{% url 'detalle_recomendacion_subida' recomendacion.id %}" class="btn btn-primary mt-3">Ver detalles</a>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="alert alert-info">
+            No has subido ninguna recomendación todavía.
+            <a href="{% url 'crear_recomendacion' %}" class="alert-link">Sube tu primera recomendación</a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,227 @@
+    {% extends 'discover/base.html' %}
+    {% load static %}
+
+    {% block extra_css %}
+        <link rel="stylesheet" href="{% static 'css/recomendaciones.css' %}?v=scrollbar-no-arrows-1">
+        <!-- Mantén tus estilos personalizados aquí -->
+        <style>
+
+        </style>
+    {% endblock %}
+
+    {% block content %}
+    {% csrf_token %}
+
+    <div class="container mt-4">
+        <!-- Mensaje de reinicio (único cambio visible) -->
+        {% if reiniciar %}
+        <div class="cycle-restart-notification">
+            <div class="notification-content">
+                <i class="fas fa-sync-alt fa-spin"></i>
+                <p>Has visto todas las recomendaciones. Comenzando nuevo ciclo.</p>
+                <button class="close-notification">&times;</button>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Todo tu contenido existente -->
+        <div class="single-card-container">
+            {% if recomendaciones %}
+                {% with recomendacion=recomendaciones|first %}
+                <div class="flip-card">
+                    <div class="flip-card-inner" id="card-{{ recomendacion.id }}">
+                        <!-- Parte frontal (portada) -->
+                        <div class="flip-card-front">
+                            <div class="inner">
+                                {% if recomendacion.portada %}
+                                    <div class="media-preview-wrapper">
+                                        <img src="{{ recomendacion.portada.url }}" 
+                                            alt="Portada de {{ recomendacion.titulo }}"
+                                            class="card-image" 
+                                            id="portada-{{ recomendacion.id }}"
+                                            data-tipo="{{ recomendacion.tipo }}"
+                                            data-titulo="{{ recomendacion.titulo }}"
+                                            
+                                            data-video-preview="{% if recomendacion.video_preview %}{{ recomendacion.video_preview.url }}{% endif %}"
+                                            data-audio-preview="{% if recomendacion.audio_preview %}{{ recomendacion.audio_preview.url }}{% endif %}">
+                                        
+                                        <!-- Reproductor integrado -->
+                                        <div class="embedded-media-player" style="display: none;">
+                                            <video class="embedded-video" playsinline>
+                                                Tu navegador no soporta el elemento de video.
+                                            </video>
+
+                                            <div class="audio-visualization">
+                                                <div class="album-art-container">
+                                                    <img src="{{ recomendacion.portada.url }}" class="album-art" alt="Portada del audio">
+                                                </div>
+                                                <div class="waveform-container">
+                                                    <canvas class="waveform"></canvas>
+                                                </div>
+                                                <div class="audio-info">
+                                                    <h3 class="audio-title">{{ recomendacion.titulo }}</h3>
+                                                    
+                                                </div>
+                                            </div>
+
+                                            <audio class="embedded-audio">
+                                                Tu navegador no soporta el elemento de audio.
+                                            </audio>
+                                        </div>
+                                    </div>
+                                {% else %}
+                                    <div class="default-cover">
+                                        <span class="discover-text">DISCOVER</span>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <!-- Parte trasera (contenido) -->
+                        <div class="flip-card-back">
+                            <div class="card-content">
+                                <div class="card-header">
+                                    <div class="card-type-genre">
+                                        <!-- Reemplaza el tipo por "Promocional" si es de empresa -->
+                                        {% if recomendacion.empresa %}
+                                            <div class="recommendation-type promotional-badge">Promocional</div>
+                                        {% else %}
+                                            <div class="recommendation-type">{{ recomendacion.tipo }}</div>
+                                        {% endif %}
+                                        
+                                        <h2 class="card-title">{{ recomendacion.titulo }}</h2>
+                                        {% if recomendacion.empresa %}
+                                            <div class="recommendation-genre">{{ recomendacion.genero.nombre }}</div>                                       
+                                        {% else %}
+                                            <div class="recommendation-genre">Género: {{ recomendacion.genero.nombre }}</div>
+                                        {% endif %}
+                                    </div>
+                                    {% if request.session.user_type == 'usuario' %}
+                                    <div class="card-actions">
+                                        <!-- Tus botones de like y bookmark se mantienen igual -->
+                                        <i class="like-btn fa-heart {% if recomendacion.id in megustas_usuario %}fas liked{% else %}far{% endif %}" 
+                                        data-recomendacion="{{ recomendacion.id }}"
+                                        onclick="toggleLike(this, event)"></i>
+
+                                        <i class="bookmark-btn fa-bookmark {% if recomendacion.id in bookmarks_usuario %}fas bookmarked{% else %}far{% endif %}" 
+                                        data-recomendacion="{{ recomendacion.id }}"
+                                        onclick="toggleBookmark(this, event)"></i>
+                                    </div>
+                                    {% endif %}
+                                </div>
+
+                                <div class="card-section{% if recomendacion.resumen %} recommendation-audio-controls{% endif %}"{% if recomendacion.resumen %} data-recomendacion-id="{{ recomendacion.id }}" data-section="resumen" tabindex="0" aria-label="Escuchar resumen al pasar el cursor o al enfocar esta sección"{% endif %}>
+                                    {% if recomendacion.resumen %}
+                                    <svg class="recommendation-audio-loading-ring" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+                                        <defs>
+                                            <linearGradient id="recommendation-audio-gradient-{{ recomendacion.id }}-resumen">
+                                                <stop offset="0%" stop-color="#1d4ed8"></stop>
+                                                <stop offset="72%" stop-color="#2563eb"></stop>
+                                                <stop offset="100%" stop-color="#93c5fd"></stop>
+                                            </linearGradient>
+                                        </defs>
+                                        <rect x="1" y="1" width="98" height="98" rx="18" ry="18" pathLength="100" stroke="url(#recommendation-audio-gradient-{{ recomendacion.id }}-resumen)"></rect>
+                                    </svg>
+                                    {% endif %}
+                                    <h5 class="text-black"><i class="fas fa-book-open animated-book"></i> Resumen</h5>
+                                    <div class="recommendation-text-scroll">
+                                        <div class="recommendation-text-content">
+                                            <p>{{ recomendacion.resumen|default:"Sin resumen disponible" }}</p>
+                                        </div>
+                                    </div>
+                                    {% if recomendacion.resumen %}
+                                    <small class="recommendation-audio-status" role="status" aria-live="polite"></small>
+                                    {% endif %}
+                                </div>
+
+                                <div class="card-section{% if recomendacion.trivia %} recommendation-audio-controls{% endif %}"{% if recomendacion.trivia %} data-recomendacion-id="{{ recomendacion.id }}" data-section="trivia" tabindex="0" aria-label="Escuchar trivia al pasar el cursor o al enfocar esta sección"{% endif %}>
+                                    {% if recomendacion.trivia %}
+                                    <svg class="recommendation-audio-loading-ring" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+                                        <defs>
+                                            <linearGradient id="recommendation-audio-gradient-{{ recomendacion.id }}-trivia">
+                                                <stop offset="0%" stop-color="#1d4ed8"></stop>
+                                                <stop offset="72%" stop-color="#2563eb"></stop>
+                                                <stop offset="100%" stop-color="#93c5fd"></stop>
+                                            </linearGradient>
+                                        </defs>
+                                        <rect x="1" y="1" width="98" height="98" rx="18" ry="18" pathLength="100" stroke="url(#recommendation-audio-gradient-{{ recomendacion.id }}-trivia)"></rect>
+                                    </svg>
+                                    {% endif %}
+                                    <h5 class="text-black"><i class="fas fa-lightbulb animated-bulb"></i> Trivia</h5>
+                                    <div class="recommendation-text-scroll">
+                                        <div class="recommendation-text-content">
+                                            <p>{{ recomendacion.trivia|default:"Sin trivia disponible" }}</p>
+                                        </div>
+                                    </div>
+                                    {% if recomendacion.trivia %}
+                                    <small class="recommendation-audio-status" role="status" aria-live="polite"></small>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="card-section{% if recomendacion.frase_destacada %} recommendation-audio-controls{% endif %}"{% if recomendacion.frase_destacada %} data-recomendacion-id="{{ recomendacion.id }}" data-section="frase_destacada" tabindex="0" aria-label="Escuchar frase destacada al pasar el cursor o al enfocar esta sección"{% endif %}>
+                                    {% if recomendacion.frase_destacada %}
+                                    <svg class="recommendation-audio-loading-ring" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+                                        <defs>
+                                            <linearGradient id="recommendation-audio-gradient-{{ recomendacion.id }}-frase">
+                                                <stop offset="0%" stop-color="#1d4ed8"></stop>
+                                                <stop offset="72%" stop-color="#2563eb"></stop>
+                                                <stop offset="100%" stop-color="#93c5fd"></stop>
+                                            </linearGradient>
+                                        </defs>
+                                        <rect x="1" y="1" width="98" height="98" rx="18" ry="18" pathLength="100" stroke="url(#recommendation-audio-gradient-{{ recomendacion.id }}-frase)"></rect>
+                                    </svg>
+                                    {% endif %}
+                                    <h5 class="text-black"><i class="fas fa-quote-left animated-quote"></i> Frase destacada</h5>
+                                    <div class="recommendation-text-scroll">
+                                        <div class="recommendation-text-content">
+                                            <blockquote>{{ recomendacion.frase_destacada|default:"Sin frase destacada" }}</blockquote>
+                                        </div>
+                                    </div>
+                                    {% if recomendacion.frase_destacada %}
+                                    <small class="recommendation-audio-status" role="status" aria-live="polite"></small>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="card-footer">
+                                    <button class="btn btn-sm btn-outline-light search-btn gap-1 col-6 mx-auto"
+                                            onclick="searchOnGoogle('{{ recomendacion.titulo }} {{ recomendacion.tipo }}{% if recomendacion.empresa %} {{ recomendacion.empresa.nombre_empresa }}{% endif %}')">
+                                        <i class="fas fa-search"></i> Buscar en Google
+                                    </button>
+                                    <small>
+                                        {% if recomendacion.empresa %}
+                                        <i class="fas fa-building"></i> {{ recomendacion.empresa.nombre_empresa }} | 
+                                        {% endif %}
+                                        <i class="far fa-calendar-alt"></i> {{ recomendacion.fecha_creacion|date:"d/m/Y" }}
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Botones de acción -->
+                <div class="text-center mt-3">
+                    <a href="{% url 'principal' %}" class="btn btn-primary">
+                        <i class="fas fa-random me-2"></i> Siguiente recomendación
+                    </a>
+                    
+                    <a href="{% url 'reportar_recomendacion' recomendacion.id %}" class="btn btn-secondary ms-2">
+                        <i class="fas fa-flag me-2"></i> Reportar
+                    </a>
+                </div>
+                {% endwith %}
+            {% else %}
+                <div class="alert alert-info text-center">
+                    No hay recomendaciones disponibles en este momento.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+
+    {% block extra_js %}
+        <script src="{% static 'js/recomendaciones.js' %}?v=hover-audio-1"></script>
+    {% endblock %}
+
+    {% endblock %}

@@ -1,0 +1,122 @@
+{% extends 'discover/base.html' %}
+{% load static %}
+
+{% block content %}
+
+{% if messages %}
+    {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    {% endfor %}
+{% endif %}
+
+<div class="container mt-4">
+    <h2 class="mb-4">Gestión de Categorías</h2>
+    <a href="{% url 'panel_administrativo' %}" class="btn btn-primary">Volver</a>
+    <div class="row">
+        <!-- Tipos de Recomendación -->
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h4>Tipos de Recomendación</h4>
+                </div>
+                <div class="card-body">
+                    <form method="post" action="{% url 'agregar_tipo' %}">
+                        {% csrf_token %}
+                        <div class="input-group mb-3">
+                            {{ tipo_form.nombre }}
+                            <button type="submit" class="btn btn-success">Agregar</button>
+                        </div>
+                    </form>
+                    
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Nombre</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for tipo in tipos %}
+                                <tr>
+                                    <td>{{ tipo.nombre }}</td>
+                                    <td>
+                                        <form method="post" action="{% url 'eliminar_tipo' tipo.id %}" class="d-inline">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('¿Eliminar este tipo y todos sus géneros asociados?')">
+                                                <i class="fas fa-trash"></i> Eliminar
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="2" class="text-center">No hay tipos registrados</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Géneros -->
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h4>Géneros</h4>
+                </div>
+                <div class="card-body">
+                    <form method="post" action="{% url 'agregar_genero' %}">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label class="form-label">Tipo:</label>
+                            {{ genero_form.tipo_recomendacion }}
+                        </div>
+                        <div class="input-group mb-3">
+                            {{ genero_form.nombre }}
+                            <button type="submit" class="btn btn-success">Agregar</button>
+                        </div>
+                    </form>
+                    
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Tipo</th>
+                                    <th>Género</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for genero in generos %}
+                                <tr>
+                                    <td>{{ genero.tipo_recomendacion.nombre }}</td>
+                                    <td>{{ genero.nombre }}</td>
+                                    <td>
+                                        <form method="post" action="{% url 'eliminar_genero' genero.id %}" class="d-inline">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('¿Eliminar este género?')">
+                                                <i class="fas fa-trash"></i> Eliminar
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="3" class="text-center">No hay géneros registrados</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

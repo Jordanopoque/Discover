@@ -1,0 +1,384 @@
+{% extends 'discover/base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/admin_dashboard.css' %}?v=12">
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <header class="admin-page-title">
+        <div class="admin-page-title__icon" aria-hidden="true">
+            <i class="fas fa-chart-line"></i>
+        </div>
+        <div>
+            <p class="admin-page-title__eyebrow">DISCOVER <span>/</span> ANALÍTICA</p>
+            <h1>Centro de Analítica <span>Discover</span></h1>
+            <p class="admin-page-title__description">Rendimiento, tendencias y actividad de la plataforma en un solo lugar.</p>
+        </div>
+        <button class="admin-report-button" id="download-dashboard-report" type="button">
+            <i class="fas fa-file-pdf" aria-hidden="true"></i>
+            Descargar informe PDF
+        </button>
+    </header>
+    <div class="admin-report-meta" id="admin-report-meta">
+        <strong>Informe del Centro de Analítica Discover</strong>
+        <span id="admin-report-period">Período: {{ desde }} a {{ hasta }}</span>
+        <span id="admin-report-filters"></span>
+        <span id="admin-report-generated"></span>
+    </div>
+
+    <section class="admin-dashboard" aria-labelledby="analytics-heading">
+        <div class="admin-section-heading">
+            <div>
+                <p class="admin-eyebrow mb-1">ANÁLISIS DE DISCOVER</p>
+                <h2 id="analytics-heading">Actividad y preferencias</h2>
+                <p class="text-muted mb-0">Métricas calculadas con la actividad registrada en la plataforma. Guardados y “Me gusta” reflejan registros vigentes; Discover no conserva retiros históricos.</p>
+            </div>
+        </div>
+
+        <form method="get" class="admin-filter-panel" aria-label="Filtros de estadísticas">
+            <div class="row g-3 align-items-end">
+                <div class="col-sm-6 col-lg-2">
+                    <label class="form-label" for="filter-from">Desde</label>
+                    <input class="form-control" id="filter-from" type="date" name="desde" value="{{ desde }}">
+                </div>
+                <div class="col-sm-6 col-lg-2">
+                    <label class="form-label" for="filter-to">Hasta</label>
+                    <input class="form-control" id="filter-to" type="date" name="hasta" value="{{ hasta }}">
+                </div>
+                <div class="col-sm-6 col-lg-3">
+                    <label class="form-label" for="filter-type">Tipo de contenido</label>
+                    <select class="form-select" id="filter-type" name="tipo">
+                        <option value="">Todos los tipos</option>
+                        {% for content_type in tipos_filtro %}
+                        <option value="{{ content_type.id }}" {% if tipo_actual == content_type.id|stringformat:"s" %}selected{% endif %}>{{ content_type.nombre }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-sm-6 col-lg-3">
+                    <label class="form-label" for="filter-genre">Género</label>
+                    <select class="form-select" id="filter-genre" name="genero">
+                        <option value="">Todos los géneros</option>
+                        {% for genre in generos_filtro %}
+                        <option value="{{ genre.id }}" data-type="{{ genre.tipo_recomendacion_id }}" {% if genero_actual == genre.id|stringformat:"s" %}selected{% endif %}>{{ genre.tipo_recomendacion.nombre }} · {{ genre.nombre }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-sm-6 col-lg-2">
+                    <label class="form-label" for="filter-metric">Ranking por</label>
+                    <select class="form-select" id="filter-metric" name="metrica">
+                        <option value="interacciones" {% if metrica_actual == 'interacciones' %}selected{% endif %}>Interacciones</option>
+                        <option value="guardados" {% if metrica_actual == 'guardados' %}selected{% endif %}>Guardados</option>
+                        <option value="me_gusta" {% if metrica_actual == 'me_gusta' %}selected{% endif %}>Me gusta</option>
+                    </select>
+                </div>
+                <div class="col-12 d-flex flex-wrap align-items-center gap-2">
+                    <button class="btn btn-primary" type="submit"><i class="fas fa-filter me-1"></i>Aplicar filtros</button>
+                    <a class="btn btn-outline-secondary" href="{% url 'panel_administrador' %}">Restablecer</a>
+                    {% if error_filtro %}<span class="text-danger small" role="alert">{{ error_filtro }}</span>{% endif %}
+                </div>
+            </div>
+        </form>
+
+        <div class="row g-3 admin-kpi-grid">
+            <div class="col-sm-6 col-xl-3">
+                <article class="card admin-kpi">
+                    <div class="card-body"><span>Recomendaciones totales</span><strong>{{ recomendaciones_totales }}</strong><small>Todos los estados · según tipo/género seleccionado</small></div>
+                </article>
+            </div>
+            <div class="col-sm-6 col-xl-3">
+                <article class="card admin-kpi">
+                    <div class="card-body"><span>Recomendaciones publicadas</span><strong>{{ total_recomendaciones }}</strong><small>En el rango y filtros seleccionados</small></div>
+                </article>
+            </div>
+            <div class="col-sm-6 col-xl-3">
+                <article class="card admin-kpi">
+                    <div class="card-body"><span>Recomendaciones guardadas</span><strong>{{ total_guardados }}</strong><small>Guardados durante el período</small></div>
+                </article>
+            </div>
+            <div class="col-sm-6 col-xl-3">
+                <article class="card admin-kpi">
+                    <div class="card-body"><span>Me gusta</span><strong>{{ total_me_gusta }}</strong><small>Me gusta durante el período</small></div>
+                </article>
+            </div>
+        </div>
+
+        <div class="row g-3 admin-kpi-grid">
+            <div class="col-sm-6 col-xl-3">
+                <article class="card admin-kpi">
+                    <div class="card-body"><span>Total de interacciones</span><strong>{{ total_interacciones }}</strong>
+                        {% if variacion_interacciones != None %}
+                        <small class="{% if variacion_interacciones > 0 %}text-success{% elif variacion_interacciones < 0 %}text-danger{% endif %}">{{ variacion_interacciones }}% vs. período anterior</small>
+                        {% else %}<small>Sin período anterior comparable</small>{% endif %}
+                    </div>
+                </article>
+            </div>
+            <div class="col-sm-6 col-xl-3">
+                <article class="card admin-kpi">
+                    <div class="card-body"><span>Usuarios activos</span><strong>{{ usuarios_activos }}</strong><small>Con sesión registrada en el período</small></div>
+                </article>
+            </div>
+            <div class="col-sm-6 col-xl-3">
+                <article class="card admin-kpi">
+                    <div class="card-body"><span>Sesiones registradas</span><strong>{{ sesiones_total }}</strong><small>Desde el inicio de la instrumentación</small></div>
+                </article>
+            </div>
+            <div class="col-sm-6 col-xl-3">
+                <article class="card admin-kpi">
+                    <div class="card-body"><span>Permanencia estimada promedio</span><strong>{{ tiempo_promedio_minutos }} <small>min</small></strong><small>Inactividad de {{ umbral_inactividad_minutos }} min cierra el tramo</small></div>
+                </article>
+            </div>
+            <div class="col-sm-6 col-xl-3">
+                <article class="card admin-kpi">
+                    <div class="card-body"><span>Permanencia estimada promedio</span><strong>{{ tiempo_promedio_minutos }} <small>min</small></strong><small>Inactividad de {{ umbral_inactividad_minutos }} min cierra el tramo</small></div>
+                </article>
+            </div>
+        </div>
+
+        <div class="row g-3">
+            <div class="col-xl-7">
+                <section class="card admin-chart-card h-100">
+                    <div class="card-body">
+                        <div class="admin-card-heading"><div><h3>Recomendaciones más populares</h3><p>Contenido publicado ordenado por la métrica elegida</p></div></div>
+                        {% if ranking %}
+                        <div class="table-responsive">
+                            <table class="table admin-ranking-table align-middle mb-0">
+                                <thead><tr><th>#</th><th>Recomendación</th><th>Tipo · Género</th><th>Guardados</th><th>Me gusta</th><th>Interacciones</th></tr></thead>
+                                <tbody>
+                                    {% for item in ranking %}
+                                    <tr><td>{{ forloop.counter }}</td><td class="fw-semibold">{{ item.titulo }}</td><td>{{ item.tipo }} · {{ item.genero }}</td><td>{{ item.guardados }}</td><td>{{ item.me_gusta }}</td><td><strong>{{ item.interacciones }}</strong></td></tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% else %}<p class="admin-empty-state">No hay recomendaciones con interacciones para este filtro.</p>{% endif %}
+                    </div>
+                </section>
+
+            </div>
+            <div class="col-xl-5">
+                <section class="card admin-chart-card h-100 admin-trend-card" id="activity-trend-card" role="button" tabindex="0" aria-haspopup="dialog" aria-label="Ampliar gráfico de interacciones en el tiempo">
+                    <div class="card-body">
+                        <div class="admin-card-heading"><div><h3>Interacciones en el tiempo</h3><p>Guardados + “Me gusta” por día (rangos largos: por mes)</p></div><span class="admin-trend-expand-hint"><i class="fas fa-expand-alt" aria-hidden="true"></i> Clic para ampliar</span></div>
+                        {% if total_interacciones %}
+                        <div class="admin-trend-wrap"><canvas id="activity-trend" role="img" aria-label="Evolución temporal de interacciones"></canvas></div>
+                        {% else %}<p class="admin-empty-state">No hay interacciones en el período seleccionado.</p>{% endif %}
+                    </div>
+                </section>
+            </div>
+        </div>
+
+        <div class="admin-trend-modal" id="activity-trend-modal" hidden>
+            <section class="admin-trend-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="activity-trend-modal-title">
+                <header class="admin-trend-modal__header">
+                    <div>
+                        <p class="admin-eyebrow mb-1">ANÁLISIS DETALLADO</p>
+                        <h2 id="activity-trend-modal-title">Interacciones en el tiempo</h2>
+                        <p>Explora cada punto para ver el volumen del período y su variación respecto al contexto seleccionado.</p>
+                    </div>
+                    <button class="admin-trend-modal__close" id="activity-trend-modal-close" type="button" aria-label="Cerrar gráfico ampliado">
+                        <i class="fas fa-times" aria-hidden="true"></i>
+                    </button>
+                </header>
+                <div class="admin-trend-modal__chart admin-trend-wrap" id="activity-trend-modal-chart">
+                    <canvas id="activity-trend-expanded" tabindex="0" role="img" aria-label="Gráfico ampliado. Usa las flechas izquierda y derecha para explorar cada período."></canvas>
+                    <div class="admin-trend-tooltip" id="activity-trend-tooltip" role="status" aria-live="polite" hidden>
+                        <strong class="admin-trend-tooltip__title"></strong>
+                        <span class="admin-trend-tooltip__value"></span>
+                        <p class="admin-trend-tooltip__analysis"></p>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <div class="admin-trend-modal" id="session-trend-modal" hidden>
+            <section class="admin-trend-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="session-trend-modal-title">
+                <header class="admin-trend-modal__header">
+                    <div>
+                        <p class="admin-eyebrow mb-1">ANÁLISIS DETALLADO</p>
+                        <h2 id="session-trend-modal-title">Duración promedio por período</h2>
+                        <p>Explora cada período para comparar sus minutos estimados por sesión con el promedio del rango.</p>
+                    </div>
+                    <button class="admin-trend-modal__close" id="session-trend-modal-close" type="button" aria-label="Cerrar gráfico ampliado">
+                        <i class="fas fa-times" aria-hidden="true"></i>
+                    </button>
+                </header>
+                <div class="admin-trend-modal__chart admin-trend-wrap" id="session-trend-modal-chart">
+                    <canvas id="session-trend-expanded" tabindex="0" role="img" aria-label="Gráfico ampliado de duración promedio. Usa las flechas izquierda y derecha para explorar cada período."></canvas>
+                    <div class="admin-trend-tooltip" id="session-trend-tooltip" role="status" aria-live="polite" hidden>
+                        <strong class="admin-trend-tooltip__title"></strong>
+                        <span class="admin-trend-tooltip__value"></span>
+                        <p class="admin-trend-tooltip__analysis"></p>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <div class="row g-3 admin-popularity-row">
+            <div class="col-lg-6">
+                <section class="card admin-chart-card h-100">
+                    <div class="card-body">
+                        <div class="admin-card-heading"><div><h3>Popularidad por tipo</h3><p>Las publicaciones y las interacciones se muestran por separado</p></div></div>
+                        {% if tipos_stats %}
+                        <div class="admin-type-chart" data-chart="types">
+                            <div class="admin-donut" id="type-donut" role="group" aria-label="Distribución interactiva de interacciones por tipo"></div>
+                            <ul class="admin-legend">
+                                {% for item in tipos_stats %}
+                                <li
+                                    data-type-name="{{ item.nombre }}"
+                                    data-interactions="{{ item.interacciones }}"
+                                    data-published="{{ item.publicadas }}"
+                                    data-saves="{{ item.guardados }}"
+                                    data-likes="{{ item.me_gusta }}"
+                                    data-share="{{ item.porcentaje }}"
+                                ><span class="admin-legend-swatch" data-index="{{ forloop.counter0 }}"></span><span>{{ item.nombre }}</span><strong>{{ item.porcentaje }}% · {{ item.interacciones }}</strong><small>{{ item.publicadas }} publicaciones · {{ item.guardados }} guardados · {{ item.me_gusta }} me gusta</small></li>
+                                {% endfor %}
+                            </ul>
+                            <div class="admin-type-insight" id="type-insight" aria-live="polite" aria-atomic="true">
+                                <span class="admin-type-insight__eyebrow">LECTURA DEL PERÍODO</span>
+                                <h4 id="type-insight-title">Explora un tipo de contenido</h4>
+                                <p id="type-insight-summary">Pasa el cursor por un segmento o selecciónalo con el teclado para consultar su análisis.</p>
+                            </div>
+                        </div>
+                        <div class="admin-bars" data-bar-group="types">
+                            {% for item in tipos_stats %}
+                            <div class="admin-bar-row"><div class="admin-bar-label"><span>{{ item.nombre }}</span><strong>{{ item.interacciones }} interacciones · {{ item.publicadas }} publicaciones</strong></div><div class="admin-bar-track"><span class="admin-bar-fill" data-value="{{ item.interacciones }}"></span></div></div>
+                            {% endfor %}
+                        </div>
+                        {% else %}<p class="admin-empty-state">No hay tipos de contenido para este filtro.</p>{% endif %}
+                    </div>
+                </section>
+            </div>
+            <div class="col-lg-6">
+                <section class="card admin-chart-card h-100">
+                    <div class="card-body">
+                        <div class="admin-card-heading"><div><h3>Géneros más populares</h3><p>Interacciones por género del tipo seleccionado</p></div></div>
+                        {% if generos_stats %}
+                        <div class="admin-genre-chart">
+                            <div class="admin-bars" data-bar-group="genres">
+                                {% for item in generos_stats %}
+                                <div
+                                    class="admin-bar-row admin-genre-row"
+                                    data-genre-name="{{ item.nombre }}"
+                                    data-content-type="{{ item.tipo }}"
+                                    data-share="{{ item.porcentaje }}"
+                                    data-published="{{ item.publicadas }}"
+                                    data-interactions="{{ item.interacciones }}"
+                                    data-saves="{{ item.guardados }}"
+                                    data-likes="{{ item.me_gusta }}"
+                                    tabindex="0"
+                                    role="button"
+                                    aria-label="{{ item.nombre }}, {{ item.tipo }}: {{ item.interacciones }} interacciones"
+                                    aria-describedby="genre-insight"
+                                >
+                                    <div class="admin-bar-label"><span>{{ item.nombre }} <small>· {{ item.tipo }}</small></span><strong>{{ item.porcentaje }}% · {{ item.publicadas }} publicaciones · {{ item.interacciones }} interacciones · {{ item.guardados }} guardados · {{ item.me_gusta }} me gusta</strong></div>
+                                    <div class="admin-bar-track"><span class="admin-bar-fill" data-value="{{ item.interacciones }}"></span></div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            <div class="admin-genre-insight" id="genre-insight" role="tooltip" aria-atomic="true" hidden>
+                                <span class="admin-genre-insight__eyebrow">LECTURA DEL PERÍODO</span>
+                                <h4 id="genre-insight-title"></h4>
+                                <p id="genre-insight-summary"></p>
+                            </div>
+                        </div>
+                        {% else %}<p class="admin-empty-state">No hay géneros con recomendaciones para este filtro.</p>{% endif %}
+                    </div>
+                </section>
+            </div>
+        </div>
+
+        <div class="row g-3">
+            <div class="col-12">
+                <section class="card admin-chart-card">
+                    <div class="card-body">
+                        <div class="admin-card-heading"><div><h3>Actividad y permanencia estimada</h3><p>Discover empezó a registrar sesiones desde esta versión; no existe histórico anterior.</p></div></div>
+                        <div class="admin-insight-grid">
+                            <div class="admin-insight">
+                                <span>Lectura descriptiva</span>
+                                {% if tipo_mas_interacciones %}<p>El tipo con más interacciones en la selección actual es <strong>{{ tipo_mas_interacciones.nombre }}</strong> ({{ tipo_mas_interacciones.interacciones }}).</p>{% else %}<p>No hay interacciones suficientes para destacar un tipo de contenido.</p>{% endif %}
+                                {% if genero_mas_interacciones %}<p>El género destacado es <strong>{{ genero_mas_interacciones.nombre }}</strong> · {{ genero_mas_interacciones.tipo }} ({{ genero_mas_interacciones.interacciones }}).</p>{% endif %}
+                            </div>
+                            <div class="admin-insight">
+                                <span>Interpretación de permanencia</span>
+                                <p>Duración estimada entre la primera y última solicitud observada: {{ tiempo_total_minutos }} minutos en total. Un tramo se reinicia tras {{ umbral_inactividad_minutos }} minutos sin actividad. {% if hora_pico != None %}La hora de inicio más frecuente fue {{ hora_pico }}:00.{% endif %} Cerrar la pestaña sin cerrar sesión no permite conocer el instante exacto de salida.</p>
+                            </div>
+                        </div>
+                        <div class="admin-session-trend">
+                            <div class="admin-card-heading mt-4"><div><h3>Duración promedio por período</h3><p>Minutos estimados por sesión, agrupados igual que la evolución de interacciones</p></div>
+                                {% if variacion_permanencia != None %}<strong class="{% if variacion_permanencia > 0 %}text-success{% elif variacion_permanencia < 0 %}text-danger{% endif %}">{{ variacion_permanencia }}% vs. período anterior</strong>{% endif %}
+                            </div>
+                            {% if sesiones_total %}<div class="admin-session-trend-card" id="session-trend-card" role="button" tabindex="0" aria-haspopup="dialog" aria-label="Ampliar gráfico de duración promedio por período">
+                                <span class="admin-trend-expand-hint"><i class="fas fa-expand-alt" aria-hidden="true"></i> Clic para ampliar</span>
+                                <div class="admin-trend-wrap"><canvas id="session-trend" role="img" aria-label="Evolución de la duración promedio de las sesiones"></canvas></div>
+                            </div>
+                            {% else %}<p class="admin-empty-state">Sin datos de permanencia para graficar.</p>{% endif %}
+                        </div>
+                        <div class="admin-session-filters" aria-label="Filtros de sesiones">
+                            <div>
+                                <label class="form-label" for="session-account-filter">Cuenta</label>
+                                <input class="form-control" id="session-account-filter" type="search" placeholder="Buscar cuenta, ID o correo">
+                            </div>
+                            <div>
+                                <label class="form-label" for="session-start-filter">Inicio</label>
+                                <input class="form-control" id="session-start-filter" type="date">
+                            </div>
+                            <div>
+                                <label class="form-label" for="session-last-activity-filter">Última actividad</label>
+                                <input class="form-control" id="session-last-activity-filter" type="date">
+                            </div>
+                            <div>
+                                <label class="form-label" for="session-duration-sort">Duración estimada</label>
+                                <select class="form-select" id="session-duration-sort">
+                                    <option value="">Orden original</option>
+                                    <option value="asc">Ascendente</option>
+                                    <option value="desc">Descendente</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="form-label" for="session-status-filter">Estado</label>
+                                <select class="form-select" id="session-status-filter">
+                                    <option value="">Todos los estados</option>
+                                    <option value="recent">Actividad reciente</option>
+                                    <option value="finished">Finalizada</option>
+                                    <option value="idle">Finalizada por inactividad</option>
+                                </select>
+                            </div>
+                        </div>
+                        {% if sesiones_recientes %}
+                        <div class="table-responsive mt-3 admin-session-list-scroll" id="admin-session-list-scroll">
+                            <table class="table admin-ranking-table align-middle mb-0" id="admin-session-statuses" data-status-url="{% url 'admin_session_activity_status' %}">
+                                    <thead><tr><th>Cuenta</th><th>Correo</th><th>Inicio</th><th>Última actividad</th><th>Duración estimada</th><th>Estado</th></tr></thead>
+                                <tbody>
+                                    {% for session in sesiones_recientes %}
+                                        <tr data-session-id="{{ session.id }}" data-session-account="Usuario #{{ session.account_id }} {{ session.account_email }}" data-session-start-date="{{ session.started_at|date:'Y-m-d' }}" data-session-last-activity-date="{{ session.last_activity_at|date:'Y-m-d' }}" data-session-duration-seconds="{{ session.duration_seconds }}">
+                                        <td>Usuario #{{ session.account_id }}</td>
+                                            <td data-session-email>{{ session.account_email }}</td>
+                                            <td>{{ session.started_at|date:"d/m/Y H:i" }}</td>
+                                        <td data-session-last-activity>{{ session.last_activity_at|date:"d/m/Y H:i" }}</td>
+                                        <td data-session-duration>{{ session.duration_seconds|floatformat:0 }} s</td>
+                                        <td>
+                                            <span data-session-status class="admin-session-status {% if session.activity_status == 'Actividad reciente' %}is-online{% else %}is-offline{% endif %}">
+                                                <span class="admin-session-status__dot" aria-hidden="true"></span>
+                                                <span data-session-status-label>{{ session.activity_status }}</span>
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% else %}<p class="admin-empty-state mt-3">No hay sesiones registradas para este período.</p>{% endif %}
+                        <p id="admin-session-filter-empty" class="admin-empty-state mt-3" hidden>No hay sesiones que coincidan con esos filtros.</p>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </section>
+
+</div>
+{{ tendencia|json_script:"admin-trend-data" }}
+{{ tendencia_sesiones|json_script:"admin-session-trend-data" }}
+<script src="{% static 'js/admin_dashboard.js' %}?v=6"></script>
+{% endblock %}
